@@ -112,3 +112,27 @@ CREATE POLICY "Allow full user access" ON public.user
 CREATE POLICY "Allow full api_key access" ON public.api_key 
     FOR ALL USING (true) WITH CHECK (true);
 */
+
+----------------------------------------------------
+-- 5. SESSION TABLE DEFINITION
+----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.session (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_user UUID NOT NULL REFERENCES public.user(id) ON DELETE CASCADE,
+    session_data JSONB, -- JSON representation of session metadata (e.g. User Agent, IP, Device)
+    status VARCHAR(20) NOT NULL DEFAULT 'Login' CHECK (status IN ('Login', 'Logout')),
+    expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    update_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Quick fix for development: disable RLS on session table
+ALTER TABLE public.session DISABLE ROW LEVEL SECURITY;
+
+-- Trigger to auto-update update_at column
+CREATE OR REPLACE TRIGGER set_session_update_at
+    BEFORE UPDATE ON public.session
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_update_timestamp();
+
