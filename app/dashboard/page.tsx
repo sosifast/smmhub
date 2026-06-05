@@ -46,13 +46,15 @@ export default function DashboardPage() {
       return;
     }
     const user = JSON.parse(session);
-    setSessionUser(user);
+    Promise.resolve().then(() => {
+      setSessionUser(user);
+    });
     
     // Load statistics
     fetchDashboardStats();
   }, [router]);
 
-  const fetchDashboardStats = async () => {
+  async function fetchDashboardStats() {
     try {
       setIsLoading(true);
 

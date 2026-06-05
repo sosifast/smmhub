@@ -55,11 +55,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex flex-col flex-1 min-h-0">
           {/* Logo Branding */}
           <div className="flex items-center h-16 px-6 border-b border-slate-100 gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-md shadow-violet-600/20 text-white">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-slate-800">SMMHub</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-600 border border-violet-100">PRO</span>
+            <img src="/logo.png" alt="SMMHub Logo" className="h-10 w-auto object-contain rounded-lg shrink-0" />
           </div>
 
           {/* Navigation Links */}
@@ -128,10 +124,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             <div className="flex-shrink-0 flex items-center px-6 gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/20">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <span className="font-bold text-lg tracking-tight text-slate-800">SMMHub</span>
+              <img src="/logo.png" alt="SMMHub Logo" className="h-10 w-auto object-contain rounded-lg shrink-0" />
             </div>
 
             <div className="mt-8 flex-1 h-0 overflow-y-auto px-4 space-y-1">

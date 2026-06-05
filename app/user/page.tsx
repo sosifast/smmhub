@@ -63,7 +63,7 @@ export default function UserPage() {
     fetchUsers();
   }, [router]);
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       setIsLoading(true);
       const { data, error } = await supabase

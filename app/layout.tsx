@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SMM Hub",
   description: "Smm Hub Mobile Apps multi api order",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
