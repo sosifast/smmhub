@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
+import Link from "next/link";
 import { 
   Search, 
   UserPlus, 
@@ -12,11 +13,12 @@ import {
   ChevronDown, 
   ChevronLeft, 
   ChevronRight,
-  MoreVertical,
-  X,
   Trash2,
   UserX,
-  UserCheck
+  UserCheck,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 
 interface User {
@@ -28,13 +30,28 @@ interface User {
   created: string;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+  type: "success" | "error" | "info";
+}
+
 export default function UserPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4500);
+  };
   
   // Sort State
   const [sortField, setSortField] = useState<keyof User>("name");
@@ -43,15 +60,6 @@ export default function UserPage() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  // Modal State
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState<"Admin" | "User">("User");
-
-  // Actions menu state
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // Authentication check and load users
   useEffect(() => {
@@ -132,35 +140,6 @@ export default function UserPage() {
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage) || 1;
 
   // Database operations
-  const handleAddUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newUserName || !newUserEmail) return;
-
-    try {
-      const { error } = await supabase
-        .from("user")
-        .insert({
-          full_name: newUserName,
-          email: newUserEmail,
-          password: "password123", // Default plain password
-          level: newUserRole === "Admin" ? "Admin" : "Member",
-          status: "Active"
-        });
-
-      if (error) throw error;
-
-      setNewUserName("");
-      setNewUserEmail("");
-      setNewUserRole("User");
-      setIsAddModalOpen(false);
-      
-      // Reload table
-      fetchUsers();
-    } catch (err: any) {
-      alert(`Failed to add user: ${err.message}`);
-    }
-  };
-
   const handleToggleStatus = async (id: string, currentStatus: User["status"]) => {
     try {
       // Toggle status matching CHECK constraints in schema.sql: ('Active', 'Not-Active')
@@ -173,17 +152,15 @@ export default function UserPage() {
 
       if (error) throw error;
 
+      showToast(`Status user berhasil diubah menjadi ${nextDbStatus === "Active" ? "Aktif" : "Tidak Aktif"}.`, "success");
       fetchUsers();
     } catch (err: any) {
-      alert(`Failed to update status: ${err.message}`);
-    } finally {
-      setActiveMenuId(null);
+      showToast(`Gagal mengubah status: ${err.message}`, "error");
     }
   };
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user? All corresponding API keys will be deleted immediately.")) {
-      setActiveMenuId(null);
       return;
     }
 
@@ -195,11 +172,10 @@ export default function UserPage() {
 
       if (error) throw error;
 
+      showToast("User berhasil dihapus.", "success");
       fetchUsers();
     } catch (err: any) {
-      alert(`Failed to delete user: ${err.message}`);
-    } finally {
-      setActiveMenuId(null);
+      showToast(`Gagal menghapus user: ${err.message}`, "error");
     }
   };
 
@@ -218,13 +194,13 @@ export default function UserPage() {
           <h1 className="text-xl font-bold text-slate-800 md:text-2xl">Registered Users</h1>
           <p className="text-sm text-slate-500 mt-1">Manage user profiles, permissions, and security status.</p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
+        <Link
+          href="/user/create"
           className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-600/10 active:scale-[0.98] transition-all cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           Add New User
-        </button>
+        </Link>
       </div>
 
       {/* Datatable Filter Bar */}
@@ -366,47 +342,38 @@ export default function UserPage() {
                     </td>
 
                     {/* Actions column */}
-                    <td className="px-6 py-4.5 text-right relative">
-                      <div className="inline-block text-left">
+                    <td className="px-6 py-4.5 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/user/show/${user.id}`}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                        >
+                          Show
+                        </Link>
+                        <Link
+                          href={`/user/edit/${user.id}`}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </Link>
                         <button
                           type="button"
-                          onClick={() => setActiveMenuId(activeMenuId === user.id ? null : user.id)}
-                          className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                          onClick={() => handleToggleStatus(user.id, user.status)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                            user.status === "Active"
+                              ? "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                              : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                          }`}
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          {user.status === "Active" ? "Deactivate" : "Activate"}
                         </button>
-
-                        {/* Interactive Dropdown */}
-                        {activeMenuId === user.id && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)}></div>
-                            <div className="absolute right-0 mt-1.5 w-40 origin-top-right rounded-xl border border-slate-200 bg-white p-1 shadow-lg ring-1 ring-black/5 focus:outline-none z-20">
-                              <button
-                                onClick={() => handleToggleStatus(user.id, user.status)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                              >
-                                {user.status === "Active" ? (
-                                  <>
-                                    <UserX className="w-3.5 h-3.5 text-slate-400" />
-                                    Deactivate User
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-                                    Activate User
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                                Delete User
-                              </button>
-                            </div>
-                          </>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -475,83 +442,46 @@ export default function UserPage() {
         </div>
       </div>
 
-      {/* Add New User Modal Overlay */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
-          {/* Backdrop blur */}
-          <div 
-            className="fixed inset-0 bg-slate-900/35 backdrop-blur-sm"
-            onClick={() => setIsAddModalOpen(false)}
-          ></div>
-
-          {/* Modal Container */}
-          <div className="relative w-full max-w-md p-6 bg-white border border-slate-200 rounded-2xl shadow-xl z-10">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-base font-bold text-slate-800">Add New User</h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddUser} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. John Doe"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all duration-200"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. john@smmhub.com"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all duration-200"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">User Role</label>
-                <select
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value as "Admin" | "User")}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 focus:outline-none focus:border-violet-500 focus:bg-white transition-all duration-200"
-                >
-                  <option value="User">User (Standard Account)</option>
-                  <option value="Admin">Admin (Full System Privilege)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-600/10 transition-colors"
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
+      {/* Toast Notification Container */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2.5 pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border text-xs font-bold shadow-md backdrop-blur-md transition-all duration-300 animate-toast-slide ${
+              toast.type === "success"
+                ? "bg-emerald-50/90 border-emerald-250 text-emerald-800"
+                : toast.type === "error"
+                ? "bg-rose-50/90 border-rose-250 text-rose-800"
+                : "bg-slate-900/90 border-slate-800 text-white"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : toast.type === "error" ? (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            ) : (
+              <RefreshCw className="w-4 h-4 text-violet-400 animate-spin shrink-0" />
+            )}
+            <span className="flex-1 whitespace-pre-wrap">{toast.message}</span>
+            <button
+              onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+              className="text-slate-400 hover:text-slate-600 focus:outline-none ml-2 text-xs"
+            >
+              ✕
+            </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(120%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-toast-slide {
+          animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
     </DashboardLayout>
   );
 }

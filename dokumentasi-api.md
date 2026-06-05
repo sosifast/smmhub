@@ -1,19 +1,19 @@
 # Dokumentasi API Backend Mobile - SMMHub
 
-Dokumentasi ini menjelaskan rute API RESTful khusus mobile yang terletak di dalam folder [app/api-mobile](file:///Volumes/Project/NextJs/smmhub/app/api-mobile). Seluruh API ini berkomunikasi langsung dengan database Supabase secara real-time.
+Dokumentasi ini menjelaskan rute API RESTful khusus mobile. Seluruh API ini berkomunikasi langsung dengan database Supabase secara real-time.
 
 **Base URL**: `https://smmhub-mu.vercel.app/api-mobile` (Produksi)
 
-## Daftar Berkas & Rute API
-Berikut adalah daftar modul API beserta berkas implementasinya:
+## Daftar Rute API
+Berikut adalah daftar modul API:
 * **Autentikasi (`/auth`)**:
-  * Registrasi: `/auth/register` &rarr; [register/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/register/route.ts)
-  * Login: `/auth/login` &rarr; [login/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/login/route.ts)
-  * Reset Password: `/auth/reset` &rarr; [reset/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/reset/route.ts)
+  * Registrasi: `/auth/register`
+  * Login: `/auth/login`
+  * Reset Password: `/auth/reset`
 * **Kunci API (`/data-apikey`)**:
-  * CRUD: `/data-apikey` &rarr; [data-apikey/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/data-apikey/route.ts)
+  * CRUD: `/data-apikey`
 * **Sesi Login (`/session`)**:
-  * Validasi & Simpan Sesi: `/session` &rarr; [session/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/session/route.ts)
+  * Validasi & Simpan Sesi: `/session`
 
 ---
 
@@ -22,7 +22,6 @@ Berikut adalah daftar modul API beserta berkas implementasinya:
 ### 1.1 Registrasi Pengguna Baru
 Mendaftarkan akun baru dengan tingkat hak akses dasar (`Member`) dan status aktif (`Active`).
 
-* **File Sumber**: [app/api-mobile/auth/register/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/register/route.ts)
 * **Endpoint**: `/auth/register`
 * **Metode**: `POST`
 * **Headers**:
@@ -77,7 +76,6 @@ Mendaftarkan akun baru dengan tingkat hak akses dasar (`Member`) dan status akti
 ### 1.2 Masuk Aplikasi (Login)
 Melakukan otentikasi alamat email dan kata sandi untuk masuk ke dalam aplikasi.
 
-* **File Sumber**: [app/api-mobile/auth/login/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/login/route.ts)
 * **Endpoint**: `/auth/login`
 * **Metode**: `POST`
 * **Headers**:
@@ -138,7 +136,6 @@ Melakukan otentikasi alamat email dan kata sandi untuk masuk ke dalam aplikasi.
 ### 1.3 Reset Kata Sandi
 Mengubah kata sandi pengguna lama dengan kata sandi yang baru berdasarkan verifikasi alamat email.
 
-* **File Sumber**: [app/api-mobile/auth/reset/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/auth/reset/route.ts)
 * **Endpoint**: `/auth/reset`
 * **Metode**: `POST`
 * **Headers**:
@@ -190,12 +187,10 @@ Mengubah kata sandi pengguna lama dengan kata sandi yang baru berdasarkan verifi
 
 ## 2. Modul Pengelolaan Kunci API (`/data-apikey`)
 
-* **File Sumber**: [app/api-mobile/data-apikey/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/data-apikey/route.ts)
-
 ### 2.1 Menampilkan Daftar Kunci API
-Mengambil semua kunci API yang terdaftar untuk seorang pengguna tertentu.
+Mengambil semua kunci API yang terdaftar untuk seorang pengguna tertentu, atau detail kunci API spesifik berdasarkan ID.
 
-* **Endpoint**: `/data-apikey?id_user={uuid_pengguna}`
+* **Endpoint**: `/data-apikey?id_user={uuid_pengguna}` ATAU `/data-apikey?id={uuid_kunci_api}`
 * **Metode**: `GET`
 * **Response Sukses (200 OK)**:
   ```json
@@ -207,18 +202,14 @@ Mengambil semua kunci API yang terdaftar untuk seorang pengguna tertentu.
         "id_user": "e8a946c1-...",
         "name": "Gateway Produksi Utama",
         "api_key": "smm_live_4a8df9e81b2c3...",
-        "secret_key": "Read/Write",
+        "secret_key": "secret_xxxxx",
         "balance": 150.00,
         "status": "Active",
         "code": "SMM",
         "api_id": "api_8247",
         "url": "https://api.smmhub.com/v1",
         "create_at": "2026-06-01T08:10:00.000Z",
-        "update_at": "2026-06-01T08:10:00.000Z",
-        "user": {
-          "email": "nama.pengguna@example.com",
-          "full_name": "Nama Lengkap Pengguna"
-        }
+        "update_at": "2026-06-01T08:10:00.000Z"
       }
     ]
   }
@@ -227,7 +218,7 @@ Mengambil semua kunci API yang terdaftar untuk seorang pengguna tertentu.
   ```json
   {
     "success": false,
-    "error": "Missing required query parameter: id_user."
+    "error": "Missing parameter: id or id_user must be provided."
   }
   ```
 * **Response Gagal (500 Internal Server Error)**:
@@ -240,8 +231,8 @@ Mengambil semua kunci API yang terdaftar untuk seorang pengguna tertentu.
 
 ---
 
-### 2.2 Membuat/Menghasilkan Kunci API Baru
-Membuat kunci token acak dengan prefiks `smm_live_...` untuk pengguna yang dipilih.
+### 2.2 Membuat Kunci API Baru (Simpan Manual)
+Menyimpan kredensial Kunci API SMM baru berdasarkan inputan pengguna secara manual (bukan generate otomatis).
 
 * **Endpoint**: `/data-apikey`
 * **Metode**: `POST`
@@ -252,26 +243,29 @@ Membuat kunci token acak dengan prefiks `smm_live_...` untuk pengguna yang dipil
   {
     "id_user": "uuid_pengguna_pemilik_key",
     "name": "Label Nama Kunci API",
-    "code": "SMM",               // Opsional (Default: SMM)
-    "url": "https://api.smmhub.com", // Opsional
-    "balance": 100               // Opsional (Default: 100.00)
+    "api_key": "smm_live_8f3c7a...",        // Wajib diisi
+    "url": "https://api.smmhub.com",        // Wajib diisi
+    "secret_key": "secret_key_dari_panel",  // Opsional (disimpan null jika kosong)
+    "api_id": "api_id_dari_panel",          // Opsional (disimpan null jika kosong)
+    "balance": 100.00,                      // Opsional (disimpan 0 jika kosong)
+    "code": "SMM"                           // Opsional (Default: SMM)
   }
   ```
 * **Response Sukses (200 OK)**:
   ```json
   {
     "success": true,
-    "message": "API Key generated successfully.",
+    "message": "API Key created successfully.",
     "data": {
       "id": "d7480b2a-...",
       "id_user": "e8a946c1-...",
       "name": "Label Nama Kunci API",
       "api_key": "smm_live_8f3c7a...",
-      "secret_key": "Read/Write",
+      "secret_key": "secret_key_dari_panel",
       "balance": 100.00,
       "status": "Active",
       "code": "SMM",
-      "api_id": "api_4982",
+      "api_id": "api_id_dari_panel",
       "url": "https://api.smmhub.com",
       "create_at": "2026-06-01T08:15:00.000Z",
       "update_at": "2026-06-01T08:15:00.000Z"
@@ -282,27 +276,32 @@ Membuat kunci token acak dengan prefiks `smm_live_...` untuk pengguna yang dipil
   ```json
   {
     "success": false,
-    "error": "Missing required fields (id_user, name)."
+    "error": "Missing required fields (id_user, name, api_key, or url)."
   }
   ```
 
 ---
 
 ### 2.3 Mengedit Kunci API
-Mengubah informasi parameter nama kunci, status keaktifan, saldo, atau alamat URL integrasi.
+Mengubah informasi parameter nama kunci, kode, api_key, api_id, secret_key, url, saldo, status keaktifan, atau melakukan sinkronisasi saldo otomatis dari provider panel SMM.
 
 * **Endpoint**: `/data-apikey`
 * **Metode**: `PUT`
 * **Headers**:
   * `Content-Type: application/json`
-* **Request Body** (Hanya sertakan kolom yang ingin diperbarui):
+* **Request Body** (Sertakan ID dan kolom yang ingin diperbarui, atau gunakan parameter `sync`):
   ```json
   {
     "id": "uuid_kunci_api",
     "name": "Nama Kunci Baru",     // Opsional
-    "status": "Inactive",          // Opsional ('Active' / 'Inactive' / 'Not-Active')
+    "code": "SMM",                 // Opsional
+    "api_key": "new_api_key_xxx",  // Opsional
+    "api_id": "new_api_id_xxx",    // Opsional
+    "secret_key": "new_secret_xxx",// Opsional
+    "url": "https://newapi.com",   // Opsional
     "balance": 250.00,             // Opsional
-    "url": "https://newapi.com"    // Opsional
+    "status": "Inactive",          // Opsional ('Active' / 'Inactive' / 'Not-Active')
+    "sync": true                   // Opsional. Jika diset true, saldo akan disinkronisasikan langsung dari API Provider URL.
   }
   ```
 * **Response Sukses (200 OK)**:
@@ -312,7 +311,9 @@ Mengubah informasi parameter nama kunci, status keaktifan, saldo, atau alamat UR
     "message": "API Key updated successfully.",
     "data": {
       "id": "uuid_kunci_api",
-      "status": "Not-Active", // Disinkronkan dengan CHECK database
+      "name": "Nama Kunci Baru",
+      "balance": 250.00,
+      "status": "Not-Active",
       ...
     }
   }
@@ -337,7 +338,7 @@ Mencabut hak akses secara permanen dengan menghapus kunci dari database.
   ```json
   {
     "success": true,
-    "message": "API Key revoked successfully."
+    "message": "API Key deleted successfully."
   }
   ```
 * **Response Gagal (400 Bad Request)**:
@@ -351,8 +352,6 @@ Mencabut hak akses secara permanen dengan menghapus kunci dari database.
 ---
 
 ## 3. Modul Pengelolaan Sesi Login (`/session`)
-
-* **File Sumber**: [app/api-mobile/session/route.ts](file:///Volumes/Project/NextJs/smmhub/app/api-mobile/session/route.ts)
 
 ### 3.1 Memvalidasi Status Sesi Aktif
 Memeriksa apakah sesi login pengguna masih aktif (belum log out dan belum kedaluwarsa).
@@ -482,4 +481,3 @@ Mengakhiri masa berlaku sesi login (Logout) pada perangkat mobile.
     "error": "Missing required field: id."
   }
   ```
-
