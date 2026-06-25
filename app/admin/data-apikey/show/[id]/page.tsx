@@ -63,7 +63,7 @@ export default function ShowApiKeyPage({ params }: PageProps) {
     } catch (e) {
       console.error("Failed to load key details:", e);
       alert("Kunci API tidak ditemukan atau gagal memuat data.");
-      router.push("/data-apikey");
+      router.push("/admin/data-apikey");
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +89,7 @@ export default function ShowApiKeyPage({ params }: PageProps) {
       {/* Back link */}
       <div className="mb-6">
         <Link 
-          href="/data-apikey"
+          href="/admin/data-apikey"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
@@ -336,7 +336,7 @@ export default function ShowApiKeyPage({ params }: PageProps) {
             {/* Footer Buttons */}
             <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
               <Link
-                href={`/data-apikey/edit/${keyData.id}`}
+                href={`/admin/data-apikey/edit/${keyData.id}`}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm transition-colors text-center"
               >
                 Edit Kunci API

@@ -87,7 +87,7 @@ export default function LoginPage() {
 
       // Wait a moment for success animation then navigate
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/admin");
       }, 800);
 
     } catch (err: any) {

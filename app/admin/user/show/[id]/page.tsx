@@ -106,7 +106,7 @@ export default function ShowUserPage({ params }: PageProps) {
     } catch (e) {
       console.error("Failed to load user details:", e);
       showToast("User tidak ditemukan atau gagal memuat data.", "error");
-      router.push("/user");
+      router.push("/admin/user");
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +117,7 @@ export default function ShowUserPage({ params }: PageProps) {
       {/* Back link */}
       <div className="mb-6">
         <Link 
-          href="/user"
+          href="/admin/user"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
@@ -252,7 +252,7 @@ export default function ShowUserPage({ params }: PageProps) {
             {/* Footer Buttons */}
             <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
               <Link
-                href={`/user/edit/${userData.id}`}
+                href={`/admin/user/edit/${userData.id}`}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm transition-colors text-center"
               >
                 Ubah Profil User
@@ -309,7 +309,7 @@ export default function ShowUserPage({ params }: PageProps) {
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <Link 
-                              href={`/data-apikey/show/${key.id}`}
+                              href={`/admin/data-apikey/show/${key.id}`}
                               className="inline-flex px-2.5 py-1 rounded-lg border border-slate-250 bg-white hover:bg-slate-50 font-semibold text-slate-600 transition-colors"
                             >
                               Detail Kunci
@@ -326,7 +326,7 @@ export default function ShowUserPage({ params }: PageProps) {
                 <Info className="w-5 h-5 text-slate-300" />
                 <p className="text-sm">Tidak ada Kunci API SMM terintegrasi untuk akun user ini.</p>
                 <Link
-                  href="/data-apikey/create"
+                  href="/admin/data-apikey/create"
                   className="mt-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm transition-all"
                 >
                   Hubungkan Kunci Baru

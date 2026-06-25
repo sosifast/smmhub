@@ -195,7 +195,7 @@ export default function UserPage() {
           <p className="text-sm text-slate-500 mt-1">Manage user profiles, permissions, and security status.</p>
         </div>
         <Link
-          href="/user/create"
+          href="/admin/user/create"
           className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-600/10 active:scale-[0.98] transition-all cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
@@ -345,13 +345,13 @@ export default function UserPage() {
                     <td className="px-6 py-4.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/user/show/${user.id}`}
+                          href={`/admin/user/show/${user.id}`}
                           className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                         >
                           Show
                         </Link>
                         <Link
-                          href={`/user/edit/${user.id}`}
+                          href={`/admin/user/edit/${user.id}`}
                           className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                         >
                           Edit

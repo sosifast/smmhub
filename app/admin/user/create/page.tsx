@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import DashboardLayout from "@/components/DashboardLayout";
 import { 
+  Plus, 
   ArrowLeft,
   User,
   Mail,
   Lock,
   Shield,
   CheckCircle,
-  Save,
   Check,
   CheckCircle2,
   AlertCircle,
@@ -19,24 +19,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
 interface Toast {
   id: number;
   message: string;
   type: "success" | "error" | "info";
 }
 
-export default function EditUserPage({ params }: PageProps) {
+export default function CreateUserPage() {
   const router = useRouter();
-  const unwrappedParams = React.use(params);
-  const id = unwrappedParams.id;
-
   const [isLoading, setIsLoading] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   // State for user table fields
@@ -46,6 +37,9 @@ export default function EditUserPage({ params }: PageProps) {
   const [level, setLevel] = useState<"Admin" | "Member">("Member");
   const [status, setStatus] = useState<"Active" | "Not-Active">("Active");
 
+  // Success state
+  const [isSuccess, setIsSuccess] = useState(false);
+
   const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -54,44 +48,16 @@ export default function EditUserPage({ params }: PageProps) {
     }, 4500);
   };
 
+  // Authentication check
   useEffect(() => {
     const session = localStorage.getItem("smmhub_session");
     if (!session) {
       router.push("/");
       return;
     }
+  }, [router]);
 
-    async function loadUserData() {
-      try {
-        setIsPageLoading(true);
-        const { data, error } = await supabase
-          .from("user")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error) throw error;
-
-        if (data) {
-          setFullName(data.full_name || "");
-          setEmail(data.email || "");
-          setPassword(data.password || "");
-          setLevel(data.level === "Admin" ? "Admin" : "Member");
-          setStatus(data.status === "Active" ? "Active" : "Not-Active");
-        }
-      } catch (err) {
-        console.error("Error loading user for edit:", err);
-        showToast("Gagal memuat data user.", "error");
-        router.push("/user");
-      } finally {
-        setIsPageLoading(false);
-      }
-    }
-
-    loadUserData();
-  }, [id, router]);
-
-  const handleUpdateUser = async (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !password) {
       showToast("Nama Lengkap, Email, dan Password wajib diisi.", "error");
@@ -103,21 +69,20 @@ export default function EditUserPage({ params }: PageProps) {
 
       const { error } = await supabase
         .from("user")
-        .update({
+        .insert({
           full_name: fullName,
           email: email.trim(),
           password: password,
           level: level,
           status: status
-        })
-        .eq("id", id);
+        });
 
       if (error) throw error;
 
       setIsSuccess(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      showToast(`Gagal menyimpan perubahan: ${message}`, "error");
+      showToast(`Gagal menyimpan User: ${message}`, "error");
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +93,7 @@ export default function EditUserPage({ params }: PageProps) {
       {/* Back link */}
       <div className="mb-6">
         <Link 
-          href="/user"
+          href="/admin/user"
           className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
@@ -138,16 +103,12 @@ export default function EditUserPage({ params }: PageProps) {
 
       {/* Header Title */}
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-slate-800 md:text-2xl">Ubah Profil User</h1>
-        <p className="text-sm text-slate-500 mt-1">Ubah detail profil user, kata sandi, status keaktifan, dan tingkat hak akses.</p>
+        <h1 className="text-xl font-bold text-slate-800 md:text-2xl">Tambah User Baru</h1>
+        <p className="text-sm text-slate-500 mt-1">Buat profil user baru berdasarkan skema database.</p>
       </div>
 
       <div className="w-full max-w-full">
-        {isPageLoading ? (
-          <div className="p-8 rounded-2xl border border-slate-200 bg-white text-center text-sm text-slate-400 shadow-sm">
-            Memuat data user...
-          </div>
-        ) : isSuccess ? (
+        {isSuccess ? (
           /* SUCCESS VIEW */
           <div className="w-full max-w-full p-6 md:p-8 rounded-2xl border border-emerald-250 bg-white shadow-md space-y-6 relative overflow-hidden">
             {/* Top decorative stripe */}
@@ -158,14 +119,37 @@ export default function EditUserPage({ params }: PageProps) {
                 <Check className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-800">Profil User Berhasil Diubah!</h3>
-                <p className="text-xs text-slate-500 mt-1">Perubahan profil "{fullName}" telah tersimpan ke sistem.</p>
+                <h3 className="text-base font-bold text-slate-800">User Berhasil Disimpan!</h3>
+                <p className="text-xs text-slate-500 mt-1">User baru "{fullName}" telah terdaftar ke dalam sistem.</p>
               </div>
+            </div>
+
+            <div className="border border-slate-150 rounded-xl overflow-hidden text-sm bg-slate-50/50">
+              <table className="w-full text-left border-collapse">
+                <tbody>
+                  <tr className="border-b border-slate-150">
+                    <td className="px-4 py-2.5 font-bold text-slate-500 w-1/4">Nama Lengkap</td>
+                    <td className="px-4 py-2.5 text-slate-800">{fullName}</td>
+                  </tr>
+                  <tr className="border-b border-slate-150">
+                    <td className="px-4 py-2.5 font-bold text-slate-500">Email</td>
+                    <td className="px-4 py-2.5 text-slate-800">{email}</td>
+                  </tr>
+                  <tr className="border-b border-slate-150">
+                    <td className="px-4 py-2.5 font-bold text-slate-500">Level (Role)</td>
+                    <td className="px-4 py-2.5 text-slate-800">{level === "Admin" ? "Admin" : "User (Member)"}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 font-bold text-slate-500">Status</td>
+                    <td className="px-4 py-2.5 text-slate-800">{status}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div className="flex gap-3 pt-4 border-t border-slate-100">
               <Link
-                href="/user"
+                href="/admin/user"
                 className="w-full text-center py-2.5 rounded-xl font-semibold text-white bg-slate-800 hover:bg-slate-700 shadow-sm transition-colors text-xs cursor-pointer"
               >
                 Selesai & Kembali ke Daftar
@@ -174,7 +158,7 @@ export default function EditUserPage({ params }: PageProps) {
           </div>
         ) : (
           /* FORM VIEW */
-          <form onSubmit={handleUpdateUser} className="w-full max-w-full p-6 md:p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
+          <form onSubmit={handleCreateUser} className="w-full max-w-full p-6 md:p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
             
             {/* Form grid layout for 3-column inputs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -232,7 +216,7 @@ export default function EditUserPage({ params }: PageProps) {
                   </span>
                   <input
                     id="password"
-                    type="text"
+                    type="password"
                     required
                     placeholder="Masukkan sandi..."
                     value={password}
@@ -289,7 +273,7 @@ export default function EditUserPage({ params }: PageProps) {
             {/* Form actions */}
             <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
               <Link
-                href="/user"
+                href="/admin/user"
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors"
               >
                 Batal
@@ -305,12 +289,12 @@ export default function EditUserPage({ params }: PageProps) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Menyimpan...
+                    Memproses...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    Simpan Perubahan
+                    <Plus className="w-4 h-4" />
+                    Buat User Baru
                   </>
                 )}
               </button>

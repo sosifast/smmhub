@@ -331,7 +331,7 @@ export default function ApiKeyPage() {
             )}
           </button>
           <Link
-            href="/data-apikey/create"
+            href="/admin/data-apikey/create"
             className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-600/10 active:scale-[0.98] transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -538,13 +538,13 @@ export default function ApiKeyPage() {
                       <td className="px-6 py-4.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/data-apikey/show/${keyItem.id}`}
+                            href={`/admin/data-apikey/show/${keyItem.id}`}
                             className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                           >
                             Show
                           </Link>
                           <Link
-                            href={`/data-apikey/edit/${keyItem.id}`}
+                            href={`/admin/data-apikey/edit/${keyItem.id}`}
                             className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
                           >
                             Edit
