@@ -10,6 +10,7 @@
     "test-supabase": "npx tsx scripts/test-supabase.ts"
   },
   "dependencies": {
+    "@pusher/push-notifications-web": "^1.1.0",
     "@supabase/supabase-js": "^2.106.2",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
