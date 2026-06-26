@@ -136,3 +136,70 @@ CREATE OR REPLACE TRIGGER set_session_update_at
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_update_timestamp();
 
+----------------------------------------------------
+-- 6. PAKET_SMM TABLE DEFINITION
+----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.paket_smm (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nama_paket TEXT NOT NULL,
+    durasi INTEGER NOT NULL,
+    "desc" JSONB,
+    total_link INTEGER NOT NULL,
+    backup_server BOOLEAN DEFAULT false,
+    status VARCHAR(20) NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Not-Active')),
+    price NUMERIC(15, 2) NOT NULL CHECK (price >= 0),
+    curency VARCHAR(5) NOT NULL DEFAULT 'IDR' CHECK (curency IN ('IDR', 'USD')),
+    create_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    update_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.paket_smm DISABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE TRIGGER set_paket_smm_update_at
+    BEFORE UPDATE ON public.paket_smm
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_update_timestamp();
+
+----------------------------------------------------
+-- 7. PAYMENT_GATEWAY TABLE DEFINITION
+----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.payment_gateway (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type VARCHAR(50) NOT NULL CHECK (type IN ('Cryptomus', 'Tripay')),
+    mode VARCHAR(20) NOT NULL DEFAULT 'Sandbox' CHECK (mode IN ('Sandbox', 'Production')),
+    api_config JSONB,
+    create_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    update_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.payment_gateway DISABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE TRIGGER set_payment_gateway_update_at
+    BEFORE UPDATE ON public.payment_gateway
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_update_timestamp();
+
+----------------------------------------------------
+-- 8. LANGGANAN_SMM TABLE DEFINITION
+----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.langganan_smm (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_users UUID NOT NULL REFERENCES public.user(id) ON DELETE CASCADE,
+    id_paket_smm UUID NOT NULL REFERENCES public.paket_smm(id) ON DELETE CASCADE,
+    id_payment_gateway UUID NOT NULL REFERENCES public.payment_gateway(id) ON DELETE CASCADE,
+    detail_transaction JSONB,
+    status_payment VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status_payment IN ('Pending', 'Error', 'Expired', 'Success')),
+    create_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    update_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE public.langganan_smm DISABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE TRIGGER set_langganan_smm_update_at
+    BEFORE UPDATE ON public.langganan_smm
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_update_timestamp();
+

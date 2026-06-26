@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import DashboardLayout from "@/components/DashboardLayout";
 import { 
   ArrowLeft,
   User,
@@ -124,7 +123,7 @@ export default function EditUserPage({ params }: PageProps) {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Back link */}
       <div className="mb-6">
         <Link 
@@ -359,6 +358,6 @@ export default function EditUserPage({ params }: PageProps) {
           animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
       `}</style>
-    </DashboardLayout>
+    </>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import DashboardLayout from "@/components/DashboardLayout";
+
 import { 
   Users, 
   Key, 
@@ -16,6 +16,9 @@ import {
   FileText
 } from "lucide-react";
 import Link from "next/link";
+import TrafficChart from "@/components/admin/TrafficChart";
+import DataTable from "@/components/admin/DataTable";
+import { createColumnHelper } from "@tanstack/react-table";
 
 interface DashboardActivity {
   id: string;
@@ -25,6 +28,56 @@ interface DashboardActivity {
   time: string;
   desc: string;
 }
+
+const columnHelper = createColumnHelper<any>();
+
+const columns = [
+  columnHelper.accessor('id', {
+    header: 'ID',
+    cell: info => <span className="font-medium text-gray-900">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor('customer', {
+    header: 'Pelanggan',
+  }),
+  columnHelper.accessor('date', {
+    header: 'Tanggal',
+    cell: info => <span className="text-gray-500">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor('amount', {
+    header: 'Jumlah',
+    cell: info => <span className="font-medium">{info.getValue()}</span>,
+  }),
+  columnHelper.accessor('status', {
+    header: 'Status',
+    cell: info => {
+      const val = info.getValue();
+      let colorClass = 'bg-gray-100 text-gray-700';
+      if (val === 'Selesai') colorClass = 'bg-emerald-100 text-emerald-700';
+      if (val === 'Proses') colorClass = 'bg-amber-100 text-amber-700';
+      return <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${colorClass}`}>{val}</span>;
+    },
+  }),
+  columnHelper.display({
+    id: 'actions',
+    header: () => <div className="text-right w-full">Aksi</div>,
+    cell: () => (
+      <div className="text-right">
+        <button className="text-gray-400 hover:text-brand-600 transition-colors cursor-pointer">
+          <i className="fa-solid fa-ellipsis-vertical px-2"></i>
+        </button>
+      </div>
+    ),
+  }),
+];
+
+const transactions = [
+  { id: "#TRX-1042", customer: "Budi Santoso", date: "25 Jun 2026", amount: "Rp 1.250.000", status: "Selesai" },
+  { id: "#TRX-1043", customer: "Siti Aminah", date: "24 Jun 2026", amount: "Rp 850.000", status: "Proses" },
+  { id: "#TRX-1044", customer: "Ahmad Dahlan", date: "24 Jun 2026", amount: "Rp 450.000", status: "Selesai" },
+  { id: "#TRX-1045", customer: "Rina Marlina", date: "23 Jun 2026", amount: "Rp 2.150.000", status: "Selesai" },
+  { id: "#TRX-1046", customer: "Joko Anwar", date: "23 Jun 2026", amount: "Rp 150.000", status: "Proses" },
+  { id: "#TRX-1047", customer: "Nadia Vega", date: "22 Jun 2026", amount: "Rp 3.500.000", status: "Selesai" },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -197,266 +250,165 @@ export default function DashboardPage() {
   if (!sessionUser) return null;
 
   return (
-    <DashboardLayout>
-      {/* Welcome Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 rounded-2xl border border-slate-100 bg-white shadow-sm gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-800 md:text-2xl">
-            Welcome back, {sessionUser.full_name || "Admin"}! 👋
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Here is a live summary of what's happening with SMMHub today.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href="/admin/data-apikey"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-violet-600 hover:bg-violet-500 transition-colors shadow-sm shadow-violet-600/10 cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New API Key
-          </Link>
-          <Link
-            href="/admin/user"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <Users className="w-3.5 h-3.5" />
-            Manage Users
-          </Link>
-        </div>
+    <>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 space-y-4 sm:space-y-0">
+          <div>
+              <h1 className="text-2xl font-bold text-gray-900">Selamat datang, {sessionUser.full_name || "Admin"}! 👋</h1>
+              <p className="text-sm text-gray-500 mt-1">Pantau performa bisnis Anda secara real-time.</p>
+          </div>
+          <button onClick={handleExportLogs} className="inline-flex items-center justify-center px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 shadow-sm transition-colors w-full sm:w-auto cursor-pointer">
+              <i className="fa-solid fa-download mr-2"></i> Unduh Backup DB
+          </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Total Users */}
-        <div className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-200">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
-            <div className="p-2 rounded-xl border text-violet-600 bg-violet-50 border-violet-100">
-              <Users className="w-4 h-4 shrink-0" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-2xl font-extrabold text-slate-800 tracking-tight">
-              {isLoading ? "..." : stats.totalUsers}
-            </span>
-            <div className="flex items-center gap-1 mt-1 text-slate-500">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
-                Live
-              </span>
-              <span className="text-[10px] text-slate-400">Sync with database</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Active API Keys */}
-        <div className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-200">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active API Keys</span>
-            <div className="p-2 rounded-xl border text-blue-600 bg-blue-50 border-blue-100">
-              <Key className="w-4 h-4 shrink-0" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-2xl font-extrabold text-slate-800 tracking-tight">
-              {isLoading ? "..." : stats.activeKeys}
-            </span>
-            <div className="flex items-center gap-1 mt-1 text-slate-500">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                <TrendingUp className="w-3 h-3 text-emerald-500" />
-                Active
-              </span>
-              <span className="text-[10px] text-slate-400">Authorized keys</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Total balance query */}
-        <div className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-200">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Key Balance</span>
-            <div className="p-2 rounded-xl border text-emerald-600 bg-emerald-50 border-emerald-100">
-              <Activity className="w-4 h-4 shrink-0" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-2xl font-extrabold text-slate-800 tracking-tight">
-              {isLoading ? "..." : `$${stats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-            </span>
-            <div className="flex items-center gap-1 mt-1 text-slate-500">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">USD</span>
-              <span className="text-[10px] text-slate-400">Sum of active credits</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Health */}
-        <div className="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all duration-200">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">System Status</span>
-            <div className="p-2 rounded-xl border text-indigo-600 bg-indigo-50 border-indigo-100">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <span className="text-2xl font-extrabold text-slate-800 tracking-tight">
-              {stats.successRate}
-            </span>
-            <div className="flex items-center gap-1 mt-1 text-slate-500">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Healthy</span>
-              <span className="text-[10px] text-slate-400">API nodes operational</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Sections: Chart and Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* API Usage Chart Card */}
-        <div className="lg:col-span-2 p-6 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">Weekly API Request Traffic</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Traffic volume measured in thousands (K) of calls</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-violet-600"></span>
-              <span className="text-xs font-medium text-slate-500">API Requests</span>
-            </div>
-          </div>
-
-          {/* Premium CSS/SVG-style Chart */}
-          <div className="h-64 flex items-end justify-between px-2 relative">
-            {/* Background gridlines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7 pt-2">
-              <div className="border-b border-slate-100 w-full h-0"></div>
-              <div className="border-b border-slate-100 w-full h-0"></div>
-              <div className="border-b border-slate-100 w-full h-0"></div>
-              <div className="border-b border-slate-100 w-full h-0"></div>
-            </div>
-
-            {chartData.map((item) => (
-              <div key={item.day} className="flex-1 flex flex-col items-center group relative z-10">
-                {/* Tooltip on Hover */}
-                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-                  <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md">
-                    {item.value}K reqs
+      {/* STATS CARDS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          
+          {/* Card 1 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <p className="text-sm font-medium text-gray-500">Total Pendapatan</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                        {isLoading ? "..." : `$${stats.totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </h3>
                   </div>
-                  <div className="w-1.5 h-1.5 bg-slate-800 rotate-45 mx-auto -mt-1"></div>
-                </div>
-
-                {/* The Bar */}
-                <div className="w-8 sm:w-12 bg-slate-100 rounded-t-lg h-48 flex items-end overflow-hidden">
-                  <div className={`w-full ${item.height} bg-gradient-to-t from-indigo-500 to-violet-500 rounded-t-lg group-hover:from-indigo-400 group-hover:to-violet-400 transition-all duration-300 transform origin-bottom hover:scale-x-105`}></div>
-                </div>
-
-                <span className="text-xs font-semibold text-slate-400 mt-2.5">{item.day}</span>
+                  <div className="p-2 bg-brand-50 rounded-lg text-brand-600">
+                      <i className="fa-solid fa-wallet text-xl"></i>
+                  </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Activity Card */}
-        <div className="p-6 rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-            <h3 className="text-sm font-bold text-slate-800">Recent Logs & Security</h3>
-            <button 
-              onClick={fetchDashboardStats}
-              className="text-[10px] font-semibold bg-violet-50 hover:bg-violet-100 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-            >
-              Refresh
-            </button>
+              <div className="mt-4 flex items-center text-sm">
+                  <span className="text-emerald-600 font-medium flex items-center bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <i className="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> 12.5%
+                  </span>
+                  <span className="text-gray-400 ml-2">vs bulan lalu</span>
+              </div>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto max-h-[250px] pr-1">
-            {isLoading ? (
-              <div className="text-center py-10 text-xs text-slate-400">Loading records...</div>
-            ) : recentActivities.length > 0 ? (
-              recentActivities.map((act) => (
-                <div key={act.id} className="flex items-start gap-3 text-xs leading-normal">
-                  <div className={`p-1.5 rounded-lg border shrink-0 mt-0.5 ${
-                    act.type === "key_revoked" || act.type === "user_suspended"
-                      ? "bg-rose-50 border-rose-100 text-rose-500" 
-                      : "bg-slate-50 border-slate-100 text-slate-500"
-                  }`}>
-                    <Shield className="w-3.5 h-3.5 shrink-0" />
+          {/* Card 2 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <p className="text-sm font-medium text-gray-500">Pengguna Aktif</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{isLoading ? "..." : stats.totalUsers}</h3>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-700 truncate">{act.desc}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      By <span className="font-medium text-slate-500">{act.user}</span> • {act.time}
-                    </p>
-                    <code className="inline-block bg-slate-50 text-[9px] text-slate-500 px-1 py-0.5 rounded border border-slate-100 mt-1 font-mono">
-                      {act.target}
-                    </code>
+                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                      <i className="fa-solid fa-users text-xl"></i>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-10 text-xs text-slate-400">No database activity logs found.</div>
-            )}
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                  <span className="text-emerald-600 font-medium flex items-center bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <i className="fa-solid fa-arrow-trend-up mr-1 text-xs"></i> 5.2%
+                  </span>
+                  <span className="text-gray-400 ml-2">vs bulan lalu</span>
+              </div>
           </div>
-        </div>
+
+          {/* Card 3 */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <p className="text-sm font-medium text-gray-500">Total Pesanan</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{isLoading ? "..." : stats.activeKeys}</h3>
+                  </div>
+                  <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+                      <i className="fa-solid fa-box-open text-xl"></i>
+                  </div>
+              </div>
+              <div className="mt-4 flex items-center text-sm">
+                  <span className="text-red-500 font-medium flex items-center bg-red-50 px-1.5 py-0.5 rounded">
+                      <i className="fa-solid fa-arrow-trend-down mr-1 text-xs"></i> 1.4%
+                  </span>
+                  <span className="text-gray-400 ml-2">vs bulan lalu</span>
+              </div>
+          </div>
+
+          {/* Card 4 (Solid Color) */}
+          <div className="bg-gradient-to-br from-brand-600 to-brand-800 rounded-xl shadow-md p-5 text-white relative overflow-hidden">
+              <div className="relative z-10">
+                  <p className="text-sm font-medium text-brand-100">Saldo Tersedia</p>
+                  <h3 className="text-2xl font-bold mt-1 mb-4">{stats.successRate}</h3>
+                  <button className="px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-sm font-medium transition-colors w-full sm:w-auto">
+                      Tarik Dana
+                  </button>
+              </div>
+              <i className="fa-solid fa-building-columns absolute -bottom-4 -right-2 text-8xl text-white opacity-10 -rotate-12"></i>
+          </div>
       </div>
 
-      {/* Quick Actions Panel */}
-      <div className="p-6 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <h3 className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4">Quick Admin Utilities</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {/* Export database dump */}
-          <button 
-            onClick={handleExportLogs}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-slate-100/50 hover:border-slate-300 transition-all text-left group cursor-pointer"
-          >
-            <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:border-slate-300 text-slate-600 shrink-0">
-              <FileText className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Export Backup</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Full DB json dump</p>
-            </div>
-          </button>
+      {/* MAIN LAYOUT (GRAFIK & INFO) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           
-          <button 
-            onClick={() => alert("Accessing security configuration...")}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-slate-100/50 hover:border-slate-300 transition-all text-left group cursor-pointer"
-          >
-            <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:border-slate-300 text-slate-600 shrink-0">
-              <Settings className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Guard Rules</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Configure CORS</p>
-            </div>
-          </button>
-          
-          <button 
-            onClick={() => alert("Supabase API and database instances are fully connected and online.")}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-slate-100/50 hover:border-slate-300 transition-all text-left group cursor-pointer"
-          >
-            <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:border-slate-300 text-slate-600 shrink-0">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">DB Status</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Supabase Online</p>
-            </div>
-          </button>
+          {/* Grafik Area (2 Kolom di lg) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 lg:col-span-2 flex flex-col justify-between">
+              <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                  <div>
+                      <h2 className="text-lg font-bold text-gray-900">Traffic Permintaan API Mingguan</h2>
+                      <p className="text-xs text-gray-400 mt-0.5">Volume traffic diukur dalam ribuan (K) calls</p>
+                  </div>
+                  <select className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 p-2 outline-none">
+                      <option>Minggu Ini</option>
+                      <option>Minggu Lalu</option>
+                  </select>
+              </div>
+              
+              <TrafficChart />
+          </div>
 
-          <Link 
-            href="/admin/user"
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-150 bg-slate-50/50 hover:bg-slate-100/50 hover:border-slate-300 transition-all text-left group cursor-pointer"
-          >
-            <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:border-slate-300 text-slate-600 shrink-0">
-              <Users className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-800">Permissions</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Edit user roles</p>
-            </div>
-          </Link>
-        </div>
+          {/* Aktivitas Terbaru (1 Kolom) */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-gray-900">Aktivitas Terbaru</h2>
+                  <button onClick={fetchDashboardStats} className="text-[10px] font-semibold bg-brand-50 hover:bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full transition-colors cursor-pointer">
+                      Refresh
+                  </button>
+              </div>
+              
+              <div className="space-y-6 flex-1 overflow-y-auto max-h-[250px] pr-1">
+                  {isLoading ? (
+                    <div className="text-center py-10 text-xs text-gray-400">Memuat log aktivitas...</div>
+                  ) : recentActivities.length > 0 ? (
+                    recentActivities.map((act) => {
+                      let iconClass = "fa-shield text-gray-600";
+                      let bgClass = "bg-gray-100";
+                      
+                      if (act.type === "key_created") {
+                        iconClass = "fa-key text-brand-600";
+                        bgClass = "bg-brand-100";
+                      } else if (act.type === "user_created") {
+                        iconClass = "fa-user-plus text-emerald-600";
+                        bgClass = "bg-emerald-100";
+                      } else if (act.type === "key_revoked" || act.type === "user_suspended") {
+                        iconClass = "fa-triangle-exclamation text-red-600";
+                        bgClass = "bg-red-100";
+                      }
+
+                      return (
+                        <div key={act.id} className="flex items-start">
+                            <div className={`w-8 h-8 rounded-full ${bgClass} flex items-center justify-center shrink-0 mt-0.5`}>
+                                <i className={`fa-solid ${iconClass} text-sm`}></i>
+                            </div>
+                            <div className="ml-3 min-w-0 flex-1">
+                                <p className="text-sm font-medium text-gray-900 truncate">{act.desc}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 break-all">{act.target} • {act.time}</p>
+                            </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-10 text-xs text-gray-400">Tidak ada log aktivitas.</div>
+                  )}
+              </div>
+              
+              <Link href="/admin/user" className="w-full mt-6 py-2 border border-gray-200 rounded-lg text-sm font-medium text-center text-gray-700 hover:bg-gray-50 transition-colors block">
+                  Kelola Pengguna
+              </Link>
+          </div>
       </div>
-    </DashboardLayout>
+
+      {/* TABEL TRANSAKSI MENGGUNAKAN DATA TABLE (TanStack) */}
+      <DataTable data={transactions} columns={columns} />
+    </>
   );
 }

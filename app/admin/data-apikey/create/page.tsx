@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import DashboardLayout from "@/components/DashboardLayout";
 import { 
   Plus, 
   Copy, 
@@ -110,7 +109,7 @@ export default function CreateApiKeyPage() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Back link */}
       <div className="mb-6">
         <Link 
@@ -417,6 +416,6 @@ export default function CreateApiKeyPage() {
           </form>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

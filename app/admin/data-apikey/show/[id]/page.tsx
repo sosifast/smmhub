@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import DashboardLayout from "@/components/DashboardLayout";
 import { 
   ArrowLeft,
   Key,
@@ -85,7 +84,7 @@ export default function ShowApiKeyPage({ params }: PageProps) {
   };
 
   return (
-    <DashboardLayout>
+    <>
       {/* Back link */}
       <div className="mb-6">
         <Link 
@@ -350,6 +349,6 @@ export default function ShowApiKeyPage({ params }: PageProps) {
           Gagal mengambil data Kunci API. Silakan coba lagi.
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 }
