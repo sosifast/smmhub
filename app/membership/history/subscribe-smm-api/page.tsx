@@ -19,8 +19,8 @@ interface SubscribeTrx {
   detail_transaction: any;
   status_payment: "Pending" | "Success" | "Error" | "Expired";
   create_at: string;
-  paket_smm: { name: string } | null;
-  payment_gateway: { name: string } | null;
+  paket_smm: { nama_paket: string } | null;
+  payment_gateway: { type: string } | null;
   user: { full_name: string } | null;
 }
 
