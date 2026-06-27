@@ -1,0 +1,1 @@
+https://f667-36-80-118-200.ngrok-free.app/api/tripay/callback
